@@ -32,6 +32,14 @@
             </intent-filter>
         </activity>
 
+        <receiver
+            android:name=".DoubleTapReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.mat.powerampmenu.DOUBLE_TAP" />
+            </intent-filter>
+        </receiver>
+
         <service
             android:name=".NLService"
             android:exported="true"

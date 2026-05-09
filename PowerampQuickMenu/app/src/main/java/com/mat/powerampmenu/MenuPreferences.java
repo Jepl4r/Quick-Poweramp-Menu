@@ -11,6 +11,7 @@ public class MenuPreferences {
     private static final String PREFS_NAME = "menu_config";
     private static final String KEY_SELECTED_IDS = "selected_ids";
     private static final String KEY_SHOW_NOW_PLAYING = "show_now_playing";
+    private static final String KEY_DOUBLE_TAP_ACTION = "double_tap_action";
     private static final int MAX_ITEMS = 10;
 
     // Default menu items
@@ -67,5 +68,13 @@ public class MenuPreferences {
 
     public void setShowNowPlaying(boolean show) {
         prefs.edit().putBoolean(KEY_SHOW_NOW_PLAYING, show).apply();
+    }
+
+    public String getDoubleTapActionId() {
+        return prefs.getString(KEY_DOUBLE_TAP_ACTION, "");
+    }
+
+    public void setDoubleTapActionId(String actionId) {
+        prefs.edit().putString(KEY_DOUBLE_TAP_ACTION, actionId).apply();
     }
 }

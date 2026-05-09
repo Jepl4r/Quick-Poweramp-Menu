@@ -4,7 +4,9 @@ SKIPUNZIP=1
 
 ui_print "-"
 ui_print "**************************************************"
-ui_print "- FiiOat Poweramp Plugin v1.0"
+ui_print "-"
+ui_print "- Quick Poweramp Menu v1.2"
+ui_print "-"
 ui_print "**************************************************"
 ui_print "-"
 ui_print "- Device: $(getprop ro.product.model)"

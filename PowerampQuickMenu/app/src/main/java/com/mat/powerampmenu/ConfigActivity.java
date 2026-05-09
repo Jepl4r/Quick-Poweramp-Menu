@@ -38,6 +38,7 @@ public class ConfigActivity extends Activity {
     private SelectedAdapter adapter;
     private TextView counterText;
     private Switch nowPlayingSwitch;
+    private TextView doubleTapLabel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,7 +80,27 @@ public class ConfigActivity extends Activity {
             }
         });
 
+        // Double-tap action selector
+        doubleTapLabel = findViewById(R.id.double_tap_label);
+        updateDoubleTapLabel();
+        findViewById(R.id.double_tap_row).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showDoubleTapPicker();
+            }
+        });
+
         updateCounter();
+    }
+
+    private void updateDoubleTapLabel() {
+        String id = menuPrefs.getDoubleTapActionId();
+        if (id == null || id.isEmpty()) {
+            doubleTapLabel.setText("Not set");
+        } else {
+            PowerampAction action = PowerampAction.findById(id);
+            doubleTapLabel.setText(action != null ? action.displayName : "Not set");
+        }
     }
 
     @Override
@@ -127,6 +148,123 @@ public class ConfigActivity extends Activity {
                 }
             })
             .show();
+    }
+
+    // --- Double-tap action picker ---
+
+    private void showDoubleTapPicker() {
+        Map<String, List<PowerampAction>> grouped = PowerampAction.getGroupedActions();
+
+        ScrollView scrollView = new ScrollView(this);
+        LinearLayout container = new LinearLayout(this);
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setPadding(0, dp(8), 0, dp(8));
+
+        // "None" option
+        LinearLayout noneRow = new LinearLayout(this);
+        noneRow.setOrientation(LinearLayout.HORIZONTAL);
+        noneRow.setGravity(Gravity.CENTER_VERTICAL);
+        noneRow.setBackgroundResource(R.drawable.menu_item_ripple);
+        noneRow.setClickable(true);
+        noneRow.setFocusable(true);
+        noneRow.setLayoutParams(new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, dp(48)));
+        noneRow.setPadding(dp(24), 0, dp(24), 0);
+        TextView noneLabel = new TextView(this);
+        noneLabel.setText("None (disabled)");
+        noneLabel.setTextSize(15);
+        noneLabel.setTextColor(0xFFFF5722);
+        noneRow.addView(noneLabel);
+        noneRow.setTag("none");
+        container.addView(noneRow);
+
+        for (Map.Entry<String, List<PowerampAction>> entry : grouped.entrySet()) {
+            TextView header = new TextView(this);
+            header.setText(entry.getKey().toUpperCase());
+            header.setTextSize(11);
+            header.setTextColor(0x80FFFFFF);
+            header.setTypeface(null, Typeface.BOLD);
+            header.setLetterSpacing(0.1f);
+            LinearLayout.LayoutParams hLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+            hLp.setMargins(dp(24), dp(10), dp(24), dp(2));
+            header.setLayoutParams(hLp);
+            container.addView(header);
+
+            for (PowerampAction action : entry.getValue()) {
+                LinearLayout row = new LinearLayout(this);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                row.setGravity(Gravity.CENTER_VERTICAL);
+                row.setBackgroundResource(R.drawable.menu_item_ripple);
+                row.setClickable(true);
+                row.setFocusable(true);
+                row.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, dp(48)));
+                row.setPadding(dp(24), 0, dp(24), 0);
+
+                ImageView icon = new ImageView(this);
+                icon.setLayoutParams(new LinearLayout.LayoutParams(dp(22), dp(22)));
+                icon.setImageResource(action.iconResId);
+                row.addView(icon);
+
+                TextView label = new TextView(this);
+                LinearLayout.LayoutParams labelLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+                labelLp.setMarginStart(dp(14));
+                label.setLayoutParams(labelLp);
+                label.setText(action.displayName);
+                label.setTextSize(15);
+                label.setTextColor(0xFFFFFFFF);
+                row.addView(label);
+
+                row.setTag(action);
+                container.addView(row);
+            }
+        }
+
+        scrollView.addView(container);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.DialogTheme);
+        builder.setTitle("Double-Tap Action");
+        builder.setView(scrollView);
+        builder.setNegativeButton("Cancel", null);
+
+        final AlertDialog dialog = builder.create();
+        dialog.show();
+
+        Window window = dialog.getWindow();
+        if (window != null) {
+            WindowManager.LayoutParams lp = window.getAttributes();
+            lp.width = (int) (getResources().getDisplayMetrics().widthPixels * 0.85);
+            window.setAttributes(lp);
+        }
+
+        for (int i = 0; i < container.getChildCount(); i++) {
+            View child = container.getChildAt(i);
+            Object tag = child.getTag();
+            if ("none".equals(tag)) {
+                child.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        menuPrefs.setDoubleTapActionId("");
+                        updateDoubleTapLabel();
+                        dialog.dismiss();
+                    }
+                });
+            } else if (tag instanceof PowerampAction) {
+                final PowerampAction action = (PowerampAction) tag;
+                child.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        menuPrefs.setDoubleTapActionId(action.id);
+                        updateDoubleTapLabel();
+                        dialog.dismiss();
+                    }
+                });
+            }
+        }
     }
 
     // --- Add Action dialog ---
@@ -230,7 +368,6 @@ public class ConfigActivity extends Activity {
         final AlertDialog dialog = builder.create();
         dialog.show();
 
-        // Make dialog width match popup menu width (85% of screen)
         Window window = dialog.getWindow();
         if (window != null) {
             WindowManager.LayoutParams lp = window.getAttributes();
