@@ -63,7 +63,7 @@ public class MenuPreferences {
     }
 
     public boolean isShowNowPlaying() {
-        return prefs.getBoolean(KEY_SHOW_NOW_PLAYING, true);
+        return prefs.getBoolean(KEY_SHOW_NOW_PLAYING, false);
     }
 
     public void setShowNowPlaying(boolean show) {
