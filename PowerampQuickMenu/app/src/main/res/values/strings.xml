@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Poweramp Quick Menu</string>
+    <string name="config_title">Poweramp Quick Menu</string>
+    <string name="config_subtitle">Choose up to 10 actions for the long-press menu.</string>
+    <string name="add_action">Add Action</string>
+</resources>

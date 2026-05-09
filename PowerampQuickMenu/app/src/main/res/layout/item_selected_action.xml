@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="56dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingStart="12dp"
+    android:paddingEnd="4dp"
+    android:background="@drawable/menu_item_ripple">
+
+    <ImageView
+        android:id="@+id/action_icon"
+        android:layout_width="24dp"
+        android:layout_height="24dp" />
+
+    <TextView
+        android:id="@+id/action_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textSize="15sp"
+        android:textColor="#FFFFFFFF"
+        android:layout_marginStart="14dp" />
+
+    <ImageButton
+        android:id="@+id/btn_up"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:src="@drawable/ic_arrow_up"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:scaleType="center"
+        android:contentDescription="Move up" />
+
+    <ImageButton
+        android:id="@+id/btn_down"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:src="@drawable/ic_arrow_down"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:scaleType="center"
+        android:contentDescription="Move down" />
+
+    <ImageButton
+        android:id="@+id/btn_remove"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:src="@drawable/ic_remove"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:scaleType="center"
+        android:contentDescription="Remove" />
+
+</LinearLayout>

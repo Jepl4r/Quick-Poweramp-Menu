@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.App" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#FF121212</item>
+        <item name="android:colorAccent">#FF5722</item>
+        <item name="android:statusBarColor">#FF121212</item>
+        <item name="android:navigationBarColor">#FF121212</item>
+    </style>
+
+    <style name="Theme.Transparent" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:colorAccent">#FF5722</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+    </style>
+
+    <style name="MenuDialogTheme" parent="@android:style/Theme.Material.Dialog">
+        <item name="android:windowBackground">@drawable/dialog_background</item>
+        <item name="android:windowMinWidthMajor">75%</item>
+        <item name="android:windowMinWidthMinor">85%</item>
+        <item name="android:colorAccent">#FF5722</item>
+        <item name="android:windowAnimationStyle">@style/DialogFadeAnimation</item>
+    </style>
+
+    <style name="DialogTheme" parent="@android:style/Theme.Material.Dialog">
+        <item name="android:windowBackground">@drawable/dialog_background</item>
+        <item name="android:colorAccent">#FF5722</item>
+    </style>
+
+    <style name="DialogFadeAnimation">
+        <item name="android:windowEnterAnimation">@anim/fade_in</item>
+        <item name="android:windowExitAnimation">@anim/fade_out</item>
+    </style>
+
+</resources>
