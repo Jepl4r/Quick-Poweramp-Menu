@@ -63,9 +63,9 @@ The Quick Menu app is bundled inside the module zip and auto-installs during mod
 4. **Reboot** - The daemon starts automatically at boot
 5. **Configure** - Open "Poweramp Quick Menu" from the launcher to customize your menu actions
 
-### From the release zip
+### From the release page
 
-1. **Download** `Quick_Poweramp_Menu_v1.0.zip`
+1. **Download** the latest release
 2. **Open Magisk**, **install** the module and **Reboot**
 
 ### Menu Actions
