@@ -10,6 +10,7 @@ public class MenuPreferences {
 
     private static final String PREFS_NAME = "menu_config";
     private static final String KEY_SELECTED_IDS = "selected_ids";
+    private static final String KEY_SHOW_NOW_PLAYING = "show_now_playing";
     private static final int MAX_ITEMS = 10;
 
     // Default menu items
@@ -58,5 +59,13 @@ public class MenuPreferences {
 
     public static int getMaxItems() {
         return MAX_ITEMS;
+    }
+
+    public boolean isShowNowPlaying() {
+        return prefs.getBoolean(KEY_SHOW_NOW_PLAYING, true);
+    }
+
+    public void setShowNowPlaying(boolean show) {
+        prefs.edit().putBoolean(KEY_SHOW_NOW_PLAYING, show).apply();
     }
 }

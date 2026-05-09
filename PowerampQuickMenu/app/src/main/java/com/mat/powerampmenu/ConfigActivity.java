@@ -2,22 +2,34 @@ package com.mat.powerampmenu;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ComponentName;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
+import android.provider.Settings;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.BaseAdapter;
+import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.ScrollView;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ConfigActivity extends Activity {
 
@@ -25,6 +37,7 @@ public class ConfigActivity extends Activity {
     private List<String> selectedIds;
     private SelectedAdapter adapter;
     private TextView counterText;
+    private Switch nowPlayingSwitch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,7 +66,29 @@ public class ConfigActivity extends Activity {
             }
         });
 
+        // Now Playing toggle
+        nowPlayingSwitch = findViewById(R.id.switch_now_playing);
+        nowPlayingSwitch.setChecked(menuPrefs.isShowNowPlaying());
+        nowPlayingSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                menuPrefs.setShowNowPlaying(isChecked);
+                if (isChecked && !isNotificationAccessEnabled()) {
+                    promptNotificationAccess();
+                }
+            }
+        });
+
         updateCounter();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // If user comes back from notification settings, update toggle state
+        if (nowPlayingSwitch != null && nowPlayingSwitch.isChecked() && !isNotificationAccessEnabled()) {
+            // Still not enabled — keep toggle on, user may still enable it
+        }
     }
 
     private void updateCounter() {
@@ -65,6 +100,37 @@ public class ConfigActivity extends Activity {
         updateCounter();
     }
 
+    // --- Notification access ---
+
+    private boolean isNotificationAccessEnabled() {
+        ComponentName cn = new ComponentName(this, NLService.class);
+        String flat = Settings.Secure.getString(getContentResolver(), "enabled_notification_listeners");
+        return flat != null && flat.contains(cn.flattenToString());
+    }
+
+    private void promptNotificationAccess() {
+        new AlertDialog.Builder(this, R.style.DialogTheme)
+            .setTitle("Notification Access Required")
+            .setMessage("To show track details and album art in the quick menu, the app needs Notification Access.\n\nThis is only used to read the current song from Poweramp.")
+            .setPositiveButton("Open Settings", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    Intent intent = new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS);
+                    startActivity(intent);
+                }
+            })
+            .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    nowPlayingSwitch.setChecked(false);
+                    menuPrefs.setShowNowPlaying(false);
+                }
+            })
+            .show();
+    }
+
+    // --- Add Action dialog ---
+
     private void showAddDialog() {
         if (selectedIds.size() >= MenuPreferences.getMaxItems()) {
             new AlertDialog.Builder(this, R.style.DialogTheme)
@@ -74,11 +140,18 @@ public class ConfigActivity extends Activity {
             return;
         }
 
-        PowerampAction[] all = PowerampAction.getAllActions();
-        final List<PowerampAction> available = new ArrayList<PowerampAction>();
-        for (PowerampAction a : all) {
-            if (!selectedIds.contains(a.id)) {
-                available.add(a);
+        // Build grouped list of available (not yet selected) actions
+        Map<String, List<PowerampAction>> grouped = PowerampAction.getGroupedActions();
+        Map<String, List<PowerampAction>> available = new LinkedHashMap<String, List<PowerampAction>>();
+        for (Map.Entry<String, List<PowerampAction>> entry : grouped.entrySet()) {
+            List<PowerampAction> filtered = new ArrayList<PowerampAction>();
+            for (PowerampAction a : entry.getValue()) {
+                if (!selectedIds.contains(a.id)) {
+                    filtered.add(a);
+                }
+            }
+            if (!filtered.isEmpty()) {
+                available.put(entry.getKey(), filtered);
             }
         }
 
@@ -90,24 +163,105 @@ public class ConfigActivity extends Activity {
             return;
         }
 
-        CharSequence[] names = new CharSequence[available.size()];
-        for (int i = 0; i < available.size(); i++) {
-            names[i] = available.get(i).displayName;
+        // Build scrollable grouped layout
+        ScrollView scrollView = new ScrollView(this);
+        LinearLayout container = new LinearLayout(this);
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setPadding(0, dp(8), 0, dp(8));
+
+        for (Map.Entry<String, List<PowerampAction>> entry : available.entrySet()) {
+            // Category header
+            TextView header = new TextView(this);
+            header.setText(entry.getKey().toUpperCase());
+            header.setTextSize(11);
+            header.setTextColor(0x80FFFFFF);
+            header.setTypeface(null, Typeface.BOLD);
+            header.setLetterSpacing(0.1f);
+            LinearLayout.LayoutParams hLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+            hLp.setMargins(dp(24), dp(10), dp(24), dp(2));
+            header.setLayoutParams(hLp);
+            container.addView(header);
+
+            // Action items in this group
+            for (final PowerampAction action : entry.getValue()) {
+                LinearLayout row = new LinearLayout(this);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                row.setGravity(Gravity.CENTER_VERTICAL);
+                row.setBackgroundResource(R.drawable.menu_item_ripple);
+                row.setClickable(true);
+                row.setFocusable(true);
+
+                LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, dp(48));
+                row.setLayoutParams(rowLp);
+                row.setPadding(dp(24), 0, dp(24), 0);
+
+                ImageView icon = new ImageView(this);
+                LinearLayout.LayoutParams iconLp = new LinearLayout.LayoutParams(dp(22), dp(22));
+                icon.setLayoutParams(iconLp);
+                icon.setImageResource(action.iconResId);
+                row.addView(icon);
+
+                TextView label = new TextView(this);
+                LinearLayout.LayoutParams labelLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+                labelLp.setMarginStart(dp(14));
+                label.setLayoutParams(labelLp);
+                label.setText(action.displayName);
+                label.setTextSize(15);
+                label.setTextColor(0xFFFFFFFF);
+                row.addView(label);
+
+                row.setTag(action);
+                container.addView(row);
+            }
         }
 
-        new AlertDialog.Builder(this, R.style.DialogTheme)
-            .setTitle("Add Action")
-            .setItems(names, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    selectedIds.add(available.get(which).id);
-                    adapter.notifyDataSetChanged();
-                    save();
-                }
-            })
-            .setNegativeButton("Cancel", null)
-            .show();
+        scrollView.addView(container);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.DialogTheme);
+        builder.setTitle("Add Action");
+        builder.setView(scrollView);
+        builder.setNegativeButton("Cancel", null);
+
+        final AlertDialog dialog = builder.create();
+        dialog.show();
+
+        // Make dialog width match popup menu width (85% of screen)
+        Window window = dialog.getWindow();
+        if (window != null) {
+            WindowManager.LayoutParams lp = window.getAttributes();
+            lp.width = (int) (getResources().getDisplayMetrics().widthPixels * 0.85);
+            window.setAttributes(lp);
+        }
+
+        // Set click listeners on action rows
+        setRowClickListeners(container, dialog);
     }
+
+    private void setRowClickListeners(ViewGroup parent, final AlertDialog dialog) {
+        for (int i = 0; i < parent.getChildCount(); i++) {
+            View child = parent.getChildAt(i);
+            Object tag = child.getTag();
+            if (tag instanceof PowerampAction) {
+                final PowerampAction action = (PowerampAction) tag;
+                child.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        selectedIds.add(action.id);
+                        adapter.notifyDataSetChanged();
+                        save();
+                        dialog.dismiss();
+                    }
+                });
+            }
+        }
+    }
+
+    // --- Main list ---
 
     private class SelectedAdapter extends BaseAdapter {
         @Override
@@ -175,5 +329,9 @@ public class ConfigActivity extends Activity {
 
             return convertView;
         }
+    }
+
+    private int dp(int value) {
+        return (int) (value * getResources().getDisplayMetrics().density);
     }
 }
