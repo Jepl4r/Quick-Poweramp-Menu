@@ -1,6 +1,6 @@
 id=quick_poweramp_menu
 name=Quick Poweramp Menu
-version=v1.0
+version=v1.1
 versionCode=1
 author=Mattia (@Jepl4r on GitHub)
 description=Remaps the multifunction button to Poweramp (short press) and Poweramp Quick Menu (long press). Auto-installs Quick Menu app.
